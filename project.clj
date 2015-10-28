@@ -6,6 +6,9 @@
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [ring-server "0.4.0"]
+                 [camel-snake-kebab "0.3.2"]
+                 [clj-http "2.0.0"]
+                 [org.clojure/data.json "0.2.6"]
                  [reagent "0.5.1"]
                  [reagent-forms "0.5.12"]
                  [reagent-utils "0.1.5"]
@@ -17,7 +20,7 @@
                  [environ "1.0.1"]
                  [org.clojure/clojurescript "1.7.145" :scope "provided"]
                  [secretary "1.2.3"]
-                 
+                 [environ "1.0.1"]
                  ]
 
   :plugins [[lein-environ "1.0.1"]
@@ -60,7 +63,6 @@
 
                    :source-paths ["env/dev/clj"]
                    :plugins [[lein-figwheel "0.4.1"]
-                             [refactor-nrepl "2.0.0-SNAPSHOT"]
                              [lein-cljsbuild "1.1.0"]]
 
                    :injections [(require 'pjstadig.humane-test-output)
