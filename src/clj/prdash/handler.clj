@@ -38,8 +38,6 @@
   (o/github-auth-url 
    (snakify (into (filter-env :client-id) {:redirect-uri auth-endpoint}))))
 
-(ghu)
-
 (def mount-target
     [:div#app
       [:h3 "ClojureScript has not been compiled!"]
@@ -77,8 +75,8 @@
   (GET "/login" [] login-route)
   (GET "/authorize*" {params :query-params}
        (auth-route (kebabify params)))
-  (GET "/" [] home-page)
-    (resources "/")
+  (resources "/static/")
+  (GET "*" [] home-page)
   (not-found "Not Found"))
 
 (def app

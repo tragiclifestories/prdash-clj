@@ -20,7 +20,6 @@
                  [environ "1.0.1"]
                  [org.clojure/clojurescript "1.7.145" :scope "provided"]
                  [secretary "1.2.3"]
-                 [environ "1.0.1"]
                  ]
 
   :plugins [[lein-environ "1.0.1"]
@@ -50,6 +49,7 @@
                                         :output-dir    "resources/public/js/out"
                                         :asset-path   "js/out"
                                         :optimizations :none
+                                        :source-map true
                                         :pretty-print  true}}}}
 
   :profiles {:dev {:repl-options {:init-ns prdash.repl}
