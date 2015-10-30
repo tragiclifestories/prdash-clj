@@ -18,7 +18,10 @@
                  [compojure "1.4.0"]
                  [hiccup "1.0.5"]
                  [environ "1.0.1"]
+                 [cljs-http "0.1.37"]
                  [org.clojure/clojurescript "1.7.145" :scope "provided"]
+                 [org.clojure/core.match "0.3.0-alpha4"]
+                 [org.clojure/core.async "0.2.371"]
                  [secretary "1.2.3"]
                  ]
 
@@ -47,7 +50,7 @@
   :cljsbuild {:builds {:app {:source-paths ["src/cljs" "src/cljc"]
                              :compiler {:output-to     "resources/public/js/app.js"
                                         :output-dir    "resources/public/js/out"
-                                        :asset-path   "js/out"
+                                        :asset-path   "/js/out"
                                         :optimizations :none
                                         :source-map true
                                         :pretty-print  true}}}}
@@ -82,10 +85,7 @@
                    :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]
                                               :compiler {:main "prdash.dev"
                                                          :source-map true}}
-
-
                                         }
-
                                }}
 
              :uberjar {:hooks [leiningen.cljsbuild minify-assets.plugin/hooks]

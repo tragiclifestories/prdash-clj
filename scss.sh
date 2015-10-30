@@ -1,0 +1,1 @@
+sassc -t nested resources/public/sass/site.scss resources/public/css/site.css

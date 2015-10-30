@@ -20,6 +20,10 @@
         (. e preventDefault)
         (. history (setToken path title))))))
 
+(defn push-state
+  ([path] (. history (setToken path)))
+  ([path title] (. history (setToken path title))))
+
 (defn link-to [path text]
   [:a {:href path :on-click (change-route history)} text])
 

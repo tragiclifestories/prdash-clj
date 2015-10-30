@@ -40,10 +40,8 @@
 
 (def mount-target
     [:div#app
-      [:h3 "ClojureScript has not been compiled!"]
-      [:p "please run "
-       [:b "lein figwheel"]
-       " in order to start the compiler"]])
+      [:h3 "Loading ... "]
+      ])
 
 (def home-page
   (html
@@ -52,10 +50,10 @@
      [:meta {:charset "utf-8"}]
      [:meta {:name "viewport"
              :content "width=device-width, initial-scale=1"}]
-     (include-css (if (env :dev) "css/site.css" "css/site.min.css"))]
+     (include-css "/css/site.css")]
     [:body
        mount-target
-       (include-js "js/app.js")]]))
+       (include-js "/js/app.js")]]))
 
 (def login-route
   (redirect (ghu)))
@@ -69,13 +67,13 @@
           {:code code :state state}))
         token-data (kebabify (o/get-auth-token keys))]
     (println token-data)
-    (redirect (str "/?token=" (:access-token token-data)))))
+    (redirect (str "/token/" (:access-token token-data)))))
 
 (defroutes routes
   (GET "/login" [] login-route)
   (GET "/authorize*" {params :query-params}
        (auth-route (kebabify params)))
-  (resources "/static/")
+  (resources "/")
   (GET "*" [] home-page)
   (not-found "Not Found"))
 
