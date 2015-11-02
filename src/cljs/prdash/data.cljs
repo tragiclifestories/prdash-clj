@@ -64,7 +64,7 @@
 ;; When you define a record, you get two factory functions ->(record) and map->record.
 ;; Here, we use the second to define our own one, which can destructure a Github API
 ;; response and create a PR record.
-(defn response->PR [response]
+(defn raw-map->PR [response]
   (let [repo-name (->> response
                        :head
                        :repo
@@ -84,6 +84,18 @@
               :opened (:created-at response)
               :updated (:updated-at response)})))
 
+;; Called without a collection as the last argument, map, filter and friends return
+;; a 'transducer'. The basic idea is take the general thing all these things do - 
+;; apply a function in turn to a series of values - and detach it from different sorts
+;; of series of values (this will operate on a vector, for instance, but we are passing
+;; another transducer to the repo-chan CSP channel above).
+;;
+;; As a neat side effect, transducers are composable in a way that obviates the need
+;; for intermediate results - we process each value fully in turn.
+(def response->PRs
+  (comp
+   (map kebabify)
+   (map raw-map->PR)))
 
 ;; Common or garden Ajax call - except it returns a CSP channel as above.
 (defn get-prs [url token]
@@ -104,12 +116,10 @@
 ;; to the set. The go macro rewrites this to an ugly mass of callbacks for us.
 (defn append-prs [xhr-chan]
   (go
-    (let [{raw-input :body} (<! xhr-chan)
-          new-prs (->> raw-input
-                       (map kebabify)
-                       (map response->PR))]
-      (println raw-input)
-      (swap! open-prs into new-prs))))
+    (let [{raw-input :body status :status} (<! xhr-chan)]
+      (case status
+        200 (swap! open-prs #(into %1 response->PRs %2) raw-input)
+        nil))))
 
 ;; go-loop is a sugar macro that gets rewritten to (go (loop ... )).
 ;; Same principle applies - wait for something to get put on the channel, and run

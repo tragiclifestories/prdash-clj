@@ -1,7 +1,7 @@
 (ns prdash.views
   (:require [reagent.core :refer [atom]]
-            [prdash.data :refer [add-repo! open-prs]]
             [cljs-time.format :as f]
+            [cljs.core.async :refer [put!]]
             [clojure.string :as string]))
 
 (defn text-input [name val & [display-name]]
@@ -17,7 +17,7 @@
        :on-change #(reset! val (-> % .-target .-value))
        }]]))
 
-(defn repo-form []
+(defn repo-form [c]
   (let [owner (atom "") repo (atom "")]
     [:div
      [:h2 "Add a new repo"]
@@ -27,7 +27,7 @@
       [:button.btn.btn-primary
        {:on-click  (fn [e]
                      (. e preventDefault)
-                     (add-repo! @owner @repo))}
+                     (put! c [@owner @repo]))}
        "Add repo"]]]))
  
 (defn login []  
@@ -49,7 +49,7 @@
    [:td (:opened pr)]
    [:td (:updated pr)]])
 
-(defn pr-list []
+(defn pr-list [open-prs]
   (when-not (empty? @open-prs)
     [:div [:h2 "Open PRs"]
      [:table.table

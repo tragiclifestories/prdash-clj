@@ -22,8 +22,8 @@
 
 (defn home-page []
   [:div
-   [v/repo-form]
-   [v/pr-list]])
+   [v/repo-form d/repo-chan]
+   [v/pr-list d/open-prs]])
 
 (defn current-page []
   [:div.container-fluid
