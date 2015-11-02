@@ -19,6 +19,7 @@
                  [hiccup "1.0.5"]
                  [environ "1.0.1"]
                  [cljs-http "0.1.37"]
+                 [com.andrewmcveigh/cljs-time "0.3.14"]
                  [org.clojure/clojurescript "1.7.145" :scope "provided"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [org.clojure/core.async "0.2.371"]

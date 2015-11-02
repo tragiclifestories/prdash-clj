@@ -1,6 +1,8 @@
 (ns prdash.views
   (:require [reagent.core :refer [atom]]
-            [prdash.data :refer [add-repo! open-prs]]))
+            [prdash.data :refer [add-repo! open-prs]]
+            [cljs-time.format :as f]
+            [clojure.string :as string]))
 
 (defn text-input [name val & [display-name]]
   (let [placeholder (or display-name name)]
@@ -26,14 +28,37 @@
        {:on-click  (fn [e]
                      (. e preventDefault)
                      (add-repo! @owner @repo))}
-       "Add repo"]
-      ]]))
-
-(defn pr-list []
-  [:div [:h2 "Open PRs"]
-   [:ul (for [pr @open-prs]
-          [:li (:number pr)])]])
+       "Add repo"]]]))
+ 
 (defn login []  
   [:div
    [:h1 
     [:a {:href "/login"} "Login"]]])
+
+(defn pr-link [pr]
+  (let [path (string/join "/"
+                          (map
+                           (partial get pr)
+                           [:repo-owner :repo-name :number]))]
+    [:a {:href (str "https://github.com/" path)} path]))
+
+(defn one-pr [pr]
+  [:tr
+   [:td [pr-link pr]]
+   [:td (:title pr)]
+   [:td (:opened pr)]
+   [:td (:updated pr)]])
+
+(defn pr-list []
+  (when-not (empty? @open-prs)
+    [:div [:h2 "Open PRs"]
+     [:table.table
+      [:thead
+       [:tr
+        [:td "Link"]
+        [:td "Title"]
+        [:td "Opened"]
+        [:td "Updated"]]]
+      [:tbody
+       (for [pr (sort-by :opened @open-prs)]
+         ^{:key (:id pr)} [one-pr pr])]]]))

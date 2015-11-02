@@ -52,7 +52,8 @@
 
 ;; A record is basically a hash-map with a schema.
 (defrecord PR
-    [number
+    [id
+     number
      title
      repo-name
      repo-owner
@@ -64,20 +65,24 @@
 ;; Here, we use the second to define our own one, which can destructure a Github API
 ;; response and create a PR record.
 (defn response->PR [response]
-  (map->PR {:number (:number response)
-            :title (:title response)
-            :repo-name (->> response
-                            :head
-                            :repo
-                            :name)
-            :repo-owner (->> response
-                            :head
-                            :repo
-                            :owner
-                            :login)
-            :url (:html-url response)
-            :opened (:created-at response)
-            :updated (:updated-at response)}))
+  (let [repo-name (->> response
+                       :head
+                       :repo
+                       :name)
+        repo-owner (->> response
+                        :head
+                        :repo
+                        :owner
+                        :login)
+        number (:number response)]
+    (map->PR {:id (str repo-owner repo-name number)
+              :number number
+              :title (:title response)
+              :repo-name repo-name
+              :repo-owner repo-owner
+              :url (:html-url response)
+              :opened (:created-at response)
+              :updated (:updated-at response)})))
 
 
 ;; Common or garden Ajax call - except it returns a CSP channel as above.
@@ -106,10 +111,10 @@
       (println raw-input)
       (swap! open-prs into new-prs))))
 
-;; go-loop is a sugar macro that gets rewritten to (go (loop ... )). Same principle
-;; applies - wait for something to get put on the channel, and run some code (in this case,
-;; make the Github request). This time around, we then loop round with (recur) and wait
-;; some more.
+;; go-loop is a sugar macro that gets rewritten to (go (loop ... )).
+;; Same principle applies - wait for something to get put on the channel, and run
+;; some code (in this case, make the Github request). This time around, we then
+;; loop round with (recur) and wait some more.
 (defn listen! [token]
   (go-loop []
     (let [url (<! repo-chan)

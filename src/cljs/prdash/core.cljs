@@ -21,15 +21,17 @@
 ;; Routes
 
 (defn home-page []
-  [:div.container-fluid [:div.row
-                         [:div.col-md-8.col-md-offset-2
-                          [v/repo-form]
-                          [v/pr-list]]]])
+  [:div
+   [v/repo-form]
+   [v/pr-list]])
 
 (defn current-page []
-  (if (nil? @token)
-    [v/login]
-    [:div [(session/get :current-page)]]))
+  [:div.container-fluid
+   [:div.row
+    [:div.col-md-10.col-md-offset-1                          
+     (if (nil? @token)
+       [v/login]
+       [(session/get :current-page)])]]])
 
 
 (secretary/defroute "/token/:auth-token" [auth-token]
