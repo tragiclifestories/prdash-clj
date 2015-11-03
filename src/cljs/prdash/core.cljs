@@ -47,6 +47,7 @@
 (defn mount-root []
   (do
     (d/listen! token)
+    (.setInterval js/window d/get-updates! 30000)
     (reagent/render [current-page] (.getElementById js/document "app"))))
 
 (defn init! []

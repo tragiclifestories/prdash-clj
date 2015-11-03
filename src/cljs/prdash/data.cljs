@@ -116,7 +116,7 @@
                                       rest-old (filter #(not= repo (:repo %)) old)]
                                   (into rest-old (response->PRs repo) new)))
                      raw-input)
-              (swap! queried-repos into (map :repo @open-prs)))
+              (reset! queried-repos (into #{} (map :repo @open-prs))))
         nil))))
 
 ;; go-loop is a sugar macro that gets rewritten to (go (loop ... )).
@@ -129,3 +129,7 @@
           xhr-chan (get-prs url @token)]
       (append-prs! owner repo-name xhr-chan)
       (recur))))
+
+(defn get-updates! []
+  (doseq [{:keys [owner name]} @queried-repos]
+    (put! repo-chan [owner name])))
