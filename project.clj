@@ -53,7 +53,6 @@
                                         :output-dir    "resources/public/js/out"
                                         :asset-path   "/js/out"
                                         :optimizations :none
-                                        :source-map true
                                         :pretty-print  true}}}}
 
   :profiles {:dev {:repl-options {:init-ns prdash.repl}
