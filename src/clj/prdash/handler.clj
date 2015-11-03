@@ -61,14 +61,12 @@
   (redirect (ghu)))
 
 (defn auth-route [{code :code state :state}]
-  (println code state)
   (let [keys
         (snakify
          (into
           (filter-env :client-id :client-secret :base-uri)
           {:code code :state state}))
         token-data (kebabify (o/get-auth-token keys))]
-    (println token-data)
     (redirect (str "/token/" (:access-token token-data)))))
 
 (defroutes routes
