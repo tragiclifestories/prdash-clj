@@ -47,6 +47,7 @@
   (html
    [:html
     [:head
+     [:title "Open PR wall of shame"]
      [:meta {:charset "utf-8"}]
      [:meta {:name "viewport"
              :content "width=device-width, initial-scale=1"}]

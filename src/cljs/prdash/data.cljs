@@ -34,7 +34,7 @@
 ;; We're using Reagent's implementation of atom, which has some handy extras
 ;; for client rendering.
 (def open-prs (atom #{}))
-
+(def queried-repos (atom #{}))
 ;; Clojure's core.async library uses communicating sequential processes (CSP),
 ;; like Go. CSP programs work essentially by use of asynchronous queues (channels).
 ;; Here, we create a channel, and map over all inputs to create a url out of two
@@ -65,10 +65,9 @@
 ;; When you define a record, you get two factory functions ->(record) and map->record.
 ;; Here, we use the second to define our own one, which can destructure a Github API
 ;; response and create a PR record.
-(defn raw-map->PR [owner repo-name]
+(defn raw-map->PR [repo]
   (fn [response]
-    (let [repo (->Repo owner repo-name)
-          number (:number response)]
+    (let [number (:number response)]
       (map->PR {:id (str (:owner repo) (:name repo) number)
                 :number number
                 :title (:title response)
@@ -85,10 +84,10 @@
 ;;
 ;; As a neat side effect, transducers are composable in a way that obviates the need
 ;; for intermediate results - we process each value fully in turn.
-(defn response->PRs [owner repo]
+(defn response->PRs [repo]
   (comp
    (map kebabify)
-   (map (raw-map->PR owner repo))))
+   (map (raw-map->PR repo))))
 
 ;; Common or garden Ajax call - except it returns a CSP channel as above.
 (defn get-prs [url token]
@@ -107,11 +106,17 @@
 ;; waiting for a value to come out of the channel. In this case, we are waiting
 ;; on a response from Github. When we get it, we create PR records and append them
 ;; to the set. The go macro rewrites this to an ugly mass of callbacks for us.
-(defn append-prs! [owner repo xhr-chan]
+(defn append-prs! [owner repo-name xhr-chan]
   (go
     (let [{raw-input :body status :status} (<! xhr-chan)]
       (case status
-        200 (swap! open-prs #(into %1 (response->PRs owner repo) %2) raw-input)
+        200 (do
+              (swap! open-prs (fn [old new]
+                                (let [repo (->Repo owner repo-name)
+                                      rest-old (filter #(not= repo (:repo %)) old)]
+                                  (into rest-old (response->PRs repo) new)))
+                     raw-input)
+              (swap! queried-repos into (map :repo @open-prs)))
         nil))))
 
 ;; go-loop is a sugar macro that gets rewritten to (go (loop ... )).
@@ -120,7 +125,7 @@
 ;; loop round with (recur) and wait some more.
 (defn listen! [token]
   (go-loop []
-    (let [[owner repo url] (<! repo-chan)
+    (let [[owner repo-name url] (<! repo-chan)
           xhr-chan (get-prs url @token)]
-      (append-prs! owner repo xhr-chan)
+      (append-prs! owner repo-name xhr-chan)
       (recur))))
