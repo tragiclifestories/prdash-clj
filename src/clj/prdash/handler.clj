@@ -52,8 +52,9 @@
              :content "width=device-width, initial-scale=1"}]
      (include-css "/css/site.css")]
     [:body
-       mount-target
-       (include-js "/js/app.js")]]))
+     mount-target
+     (include-js "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js")
+     (include-js "/js/app.js")]]))
 
 (def login-route
   (redirect (ghu)))

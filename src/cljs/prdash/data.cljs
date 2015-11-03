@@ -42,7 +42,7 @@
 (def repo-chan (chan 10 (map
                          (fn [[owner repo]] ;; map callbacks expect one argument,
                                             ;; so we destructure an input vector
-                           (str api-base "/repos/" owner "/" repo "/pulls")))))
+                           [owner repo (str api-base "/repos/" owner "/" repo "/pulls")]))))
 
 ;; Puts something on the above channel. The view code only knows about this function;
 ;; it otherwise calls nothing in the data layer. Such decoupling! 
@@ -51,12 +51,13 @@
     (put! repo-chan [owner repo])))
 
 ;; A record is basically a hash-map with a schema.
+(defrecord Repo [owner name])
+
 (defrecord PR
     [id
      number
      title
-     repo-name
-     repo-owner
+     repo
      url
      opened
      updated])
@@ -64,25 +65,17 @@
 ;; When you define a record, you get two factory functions ->(record) and map->record.
 ;; Here, we use the second to define our own one, which can destructure a Github API
 ;; response and create a PR record.
-(defn raw-map->PR [response]
-  (let [repo-name (->> response
-                       :head
-                       :repo
-                       :name)
-        repo-owner (->> response
-                        :head
-                        :repo
-                        :owner
-                        :login)
-        number (:number response)]
-    (map->PR {:id (str repo-owner repo-name number)
-              :number number
-              :title (:title response)
-              :repo-name repo-name
-              :repo-owner repo-owner
-              :url (:html-url response)
-              :opened (:created-at response)
-              :updated (:updated-at response)})))
+(defn raw-map->PR [owner repo-name]
+  (fn [response]
+    (let [repo (->Repo owner repo-name)
+          number (:number response)]
+      (map->PR {:id (str (:owner repo) (:name repo) number)
+                :number number
+                :title (:title response)
+                :repo repo
+                :url (:html-url response)
+                :opened (:created-at response)
+                :updated (:updated-at response)}))))
 
 ;; Called without a collection as the last argument, map, filter and friends return
 ;; a 'transducer'. The basic idea is take the general thing all these things do - 
@@ -92,10 +85,10 @@
 ;;
 ;; As a neat side effect, transducers are composable in a way that obviates the need
 ;; for intermediate results - we process each value fully in turn.
-(def response->PRs
+(defn response->PRs [owner repo]
   (comp
    (map kebabify)
-   (map raw-map->PR)))
+   (map (raw-map->PR owner repo))))
 
 ;; Common or garden Ajax call - except it returns a CSP channel as above.
 (defn get-prs [url token]
@@ -114,11 +107,11 @@
 ;; waiting for a value to come out of the channel. In this case, we are waiting
 ;; on a response from Github. When we get it, we create PR records and append them
 ;; to the set. The go macro rewrites this to an ugly mass of callbacks for us.
-(defn append-prs [xhr-chan]
+(defn append-prs! [owner repo xhr-chan]
   (go
     (let [{raw-input :body status :status} (<! xhr-chan)]
       (case status
-        200 (swap! open-prs #(into %1 response->PRs %2) raw-input)
+        200 (swap! open-prs #(into %1 (response->PRs owner repo) %2) raw-input)
         nil))))
 
 ;; go-loop is a sugar macro that gets rewritten to (go (loop ... )).
@@ -127,7 +120,7 @@
 ;; loop round with (recur) and wait some more.
 (defn listen! [token]
   (go-loop []
-    (let [url (<! repo-chan)
+    (let [[owner repo url] (<! repo-chan)
           xhr-chan (get-prs url @token)]
-      (append-prs xhr-chan)
+      (append-prs! owner repo xhr-chan)
       (recur))))

@@ -1,6 +1,6 @@
 (ns prdash.views
   (:require [reagent.core :refer [atom]]
-            [cljs-time.format :as f]
+            [prdash.date :refer [from-now]]
             [cljs.core.async :refer [put!]]
             [clojure.string :as string]))
 
@@ -35,19 +35,19 @@
    [:h1 
     [:a {:href "/login"} "Login"]]])
 
-(defn pr-link [pr]
+(defn pr-link [{:keys [repo url number]}]
   (let [path (string/join "/"
-                          (map
-                           (partial get pr)
-                           [:repo-owner :repo-name :number]))]
-    [:a {:href (str "https://github.com/" path)} path]))
+                          [(:owner repo)
+                           (:name repo)
+                           number])]
+    [:a {:href url} path]))
 
 (defn one-pr [pr]
   [:tr
    [:td [pr-link pr]]
    [:td (:title pr)]
-   [:td (:opened pr)]
-   [:td (:updated pr)]])
+   [:td (from-now (:opened pr))]
+   [:td (from-now (:updated pr))]])
 
 (defn pr-list [open-prs]
   (when-not (empty? @open-prs)
